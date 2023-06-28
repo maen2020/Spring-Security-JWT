@@ -3,13 +3,12 @@ package com.maen.controller;
 import com.maen.models.ERole;
 import com.maen.models.RoleEntity;
 import com.maen.models.UserEntity;
-import com.maen.repositories.RoleRepository;
 import com.maen.repositories.UserRepository;
 import com.maen.request.CreateUserDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -17,6 +16,10 @@ import java.util.stream.Collectors;
 
 @RestController
 public class PrincipalController {
+
+    //Inyectar la clase para poder encriptar la contraseña que se va a gurdar en la db.
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     //Inyectar la clase para poder persistir (guardar) el usuario creado en la db.
     @Autowired
@@ -49,7 +52,7 @@ public class PrincipalController {
         //Creacion del usuario en la db.
         UserEntity userEntity = UserEntity.builder()
                 .username(createUserDTO.getUsername())
-                .password(createUserDTO.getPassword())
+                .password(passwordEncoder.encode(createUserDTO.getPassword())) //Ecriptar la contraseña enviada a la db.
                 .email(createUserDTO.getEmail())
                 .roles(roles)
                 .build();
