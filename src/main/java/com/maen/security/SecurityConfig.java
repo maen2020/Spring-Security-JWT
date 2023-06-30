@@ -1,27 +1,40 @@
 package com.maen.security;
 
+import com.maen.security.filters.JwtAuthenticationFilter;
+import com.maen.security.jwt.JwtUtils;
+import com.maen.service.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration //Configuracion de spring.
 public class SecurityConfig {
 
+    //Inyectar la clase JwtUtil que va a recibir el filtro de autenticacion.
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    //Inyectar la clase para traer los usuarios de la db.
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+
     /**
      * Metodo para hacer la configuracion de toda la seguridad.
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, AuthenticationManager authenticationManager) throws Exception {
+
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtUtils); //Definir el filtro de autenticacion.
+        jwtAuthenticationFilter.setAuthenticationManager(authenticationManager); //Setear un authenticationManager al jwtAuthenticationFilter.
+        jwtAuthenticationFilter.setFilterProcessesUrl("/login"); //Setear otra ruta si no se quiere el login que viene por defecto.
+
         return httpSecurity
                 .csrf(config -> config.disable()) //Deshabilitarlo cuando no se trabaja con formularios.
 
@@ -35,25 +48,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS); // Definir la politica de la creacion de la sesion.
                 })
-                .httpBasic() //Hacer una autenticacion basica, esta se hace con usuario en memoria.
-                .and()
+                .addFilter(jwtAuthenticationFilter)
                 .build();
-    }
-
-    /**
-     * #1
-     * Creacion de un usuario en memory con accesos (OPTIONAL).
-     * Solo si no se cuenta con una base de datos.
-     */
-    @Bean
-    UserDetailsService userDetailsService(){
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-        manager.createUser(User.withUsername("Miguel") //Agregando valores al usuario en memoria.
-                .password("1234")
-                .roles()
-                .build());
-
-        return manager;
     }
 
     /**
@@ -64,7 +60,7 @@ public class SecurityConfig {
     @Bean
     AuthenticationManager authenticationManager(HttpSecurity httpSecurity, PasswordEncoder passwordEncoder) throws Exception{
         return httpSecurity.getSharedObject(AuthenticationManagerBuilder.class)
-                .userDetailsService(userDetailsService()) //Enviar el usuario que se va a autenticar.
+                .userDetailsService(userDetailsService) //Enviar el usuario que se va a autenticar.
                 .passwordEncoder(passwordEncoder)
                 .and()
                 .build();

@@ -25,11 +25,12 @@ import java.util.Map;
 /**
  * Clase que maneja el filtro de autenticacion.
  * Cuando un usuario se valla a registrar.
+ * No se define como componente dado a que se le envia varios argumentos y setear varios atributos.
  */
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     //Inyectar la clase JwtUtils por constructor para generar el token.
-    private final JwtUtils jwtUtils;
+    private JwtUtils jwtUtils;
     public JwtAuthenticationFilter(JwtUtils jwtUtils){
         this.jwtUtils = jwtUtils;
     }
@@ -105,7 +106,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.getWriter().write(new ObjectMapper().writeValueAsString(httpResponse));
         response.setStatus(HttpStatus.OK.value()); //Otro parametro en la respuesta.
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().flush(); //Garantizar que todo se escriba correctamenete.
+        response.getWriter().flush(); //Garantizar quetodo se escriba correctamenete.
         super.successfulAuthentication(request, response, chain, authResult);
     }
 }

@@ -4,7 +4,7 @@ import com.maen.models.ERole;
 import com.maen.models.RoleEntity;
 import com.maen.models.UserEntity;
 import com.maen.repositories.UserRepository;
-import com.maen.request.CreateUserDTO;
+import com.maen.controller.request.CreateUserDTO;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
