@@ -1,6 +1,7 @@
 package com.maen.security;
 
 import com.maen.security.filters.JwtAuthenticationFilter;
+import com.maen.security.filters.JwtAuthorizationFilter;
 import com.maen.security.jwt.JwtUtils;
 import com.maen.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +14,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration //Configuracion de spring.
 public class SecurityConfig {
+
+    //Inyectar la clase de filtro de autorizacion.
+    @Autowired
+    JwtAuthorizationFilter authorizationFilter;
 
     //Inyectar la clase JwtUtil que va a recibir el filtro de autenticacion.
     @Autowired
@@ -43,12 +49,12 @@ public class SecurityConfig {
                     auth.requestMatchers("/hello").permitAll(); //Arreglo de strings de urls sin autorizacion.
                     auth.anyRequest().authenticated(); //Cualquier otra ruta o endpoint necesita autenticacion.
                 })
-
                 //Administracion de la sesion.
                 .sessionManagement(session -> {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS); // Definir la politica de la creacion de la sesion.
                 })
-                .addFilter(jwtAuthenticationFilter)
+                .addFilter(jwtAuthenticationFilter) //Primer filtro a ejecutar.
+                .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class) //Segundo filtro a ejecutar.
                 .build();
     }
 
@@ -69,6 +75,7 @@ public class SecurityConfig {
     /**
      * #3
      * Se crea para poder insertarlo en el metodo AuthenticationManager.
+     * Encripta la contraseña.
      */
     @Bean
     PasswordEncoder passwordEncoder(){
